@@ -92,3 +92,8 @@ example |> Day1.solve(:part2)
 ```elixir
 Input.for_day(1) |> Day1.solve(:part2)
 ```
+
+#### Better solutions (after I've completed mine):
+
+* Use of `Enum.unzip` [link](https://github.com/evertvanaart/advent2024/blob/main/lib/solutions/day01/common.ex)
+* Just multiplying frequencies directly [link](https://github.com/evertvanaart/advent2024/blob/main/lib/solutions/day01/day01b.ex)
