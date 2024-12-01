@@ -1,0 +1,94 @@
+# Advent 2024
+
+```elixir
+Mix.install([
+  {:req, "~> 0.5.8"}
+])
+```
+
+## Introduction
+
+To run, set the SESSION livebook variable to the value of the session cookie that you find on the advent of code homepage.
+
+## Utils
+
+```elixir
+defmodule Input do
+  def for_day(day) do
+    fname = Path.join(__DIR__,"day#{dayformat(day)}.txt")
+    
+    if (File.exists?(fname)) do
+      File.read!(fname)
+    else
+      headers = [cookie: "session=" <> System.get_env("LB_SESSION")]
+      input = Req.get!("https://adventofcode.com/2024/day/#{day}/input",headers: headers).body
+      File.write!(fname,input)
+      input
+    end
+  end
+
+  defp dayformat(day) when day < 10, do: "0#{day}"
+  defp dayformat(day), do: "#{day}"
+    
+end
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Day 1
+
+```elixir
+example = """
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"""
+```
+
+```elixir
+defmodule Day1 do
+  def solve(input, :part1) do
+    {l1,l2} = parse(input)
+    l1 = Enum.sort(l1)
+    l2 = Enum.sort(l2)
+
+    Enum.zip(l1,l2)
+    |> Enum.map(fn {a,b} -> abs(a-b) end)
+    |> Enum.sum()
+  end
+
+  def solve(input, :part2) do
+    {l1,l2} = parse(input)
+    freq = Enum.frequencies(l2)
+    Enum.reduce(l1,0,fn a,acc -> acc + a * Map.get(freq,a,0) end)
+  end
+
+  def parse(input) do
+    {l1,l2} = input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.split(&1, " ", trim: true))
+    |> Enum.reduce({[],[]},fn [a,b], {lista,listb} -> {[a|lista], [b|listb]} end)
+
+    {l1 |> Enum.map(&String.to_integer/1), l2 |> Enum.map(&String.to_integer/1)}
+  end
+end
+```
+
+```elixir
+example |> Day1.solve(:part1)
+```
+
+```elixir
+Input.for_day(1) |> Day1.solve(:part1)
+```
+
+```elixir
+example |> Day1.solve(:part2)
+```
+
+```elixir
+Input.for_day(1) |> Day1.solve(:part2)
+```
