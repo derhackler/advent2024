@@ -196,6 +196,11 @@ example |> Day2.solve(:part2)
 Input.for_day(2) |> Day2.solve(:part2)
 ```
 
+#### Learning from others
+
+* There exists a `List.delete_at` function...
+* It's possible to pipe into a `case` statement. [link](https://elixirforum.com/t/advent-of-code-2024-day-2/67804/5)
+
 ## Day 3
 
 ```elixir
