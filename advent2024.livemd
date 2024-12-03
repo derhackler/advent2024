@@ -195,3 +195,75 @@ example |> Day2.solve(:part2)
 ```elixir
 Input.for_day(2) |> Day2.solve(:part2)
 ```
+
+## Day 3
+
+```elixir
+example = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
+```
+
+```elixir
+defmodule Day3 do
+  def solve(input,:part1) do
+    parse(input,:mul,[],[])
+    |> Enum.map(fn 
+      [a,b] -> a*b
+      _other -> 0
+    end)
+    |> Enum.sum()
+  end
+
+  def solve(input, :part2) do
+    input
+    |> parse(:mul,[],[])
+    |> Enum.reverse()
+    |> Enum.reduce({:do,[]}, fn 
+      :do,{_,nums} -> {:do,nums}
+      :dont,{_,nums} -> {:dont,nums}
+      _elem,{:dont,nums} -> {:dont,nums}
+      elem,{:do,nums} -> {:do,[elem|nums]}
+    end)
+    |> then(fn {_,nums} -> nums end)
+    |> Enum.map(fn [a,b] -> a*b end)
+    |> Enum.sum()
+  end
+
+  # grammar: :mul,:int,:comma_or_brace,:int,:comma_or_brace
+
+  def parse("mul(" <> rest,:mul,_temp,acc), do: parse(rest, :int, [], acc)
+  def parse("do()" <> rest,:mul,_temp,acc), do: parse(rest, :mul, [], [:do|acc])
+  def parse("don't()" <> rest, :mul,_temp,acc), do: parse(rest, :mul, [], [:dont|acc])
+  
+  def parse(val,:int, temp, acc) do
+    case Integer.parse(val) do
+      :error -> parse(val, :mul, [], acc)
+      {num,rest} when num < 1000 and num >= 0 -> parse(rest, :comma_or_brace, [num|temp], acc)
+      {_num,rest} -> parse(rest, :mul, [], acc)
+    end
+  end
+  
+  def parse("," <> rest,:comma_or_brace,[_num]=temp,acc), do: parse(rest, :int, temp, acc)
+  def parse(")" <> rest,:comma_or_brace,[_num,_num2]=temp,acc), do: parse(rest, :mul, [], [temp|acc])
+
+  def parse(<<_something_unexpected, rest::binary>>,_any,_temp,acc), do: parse(rest, :mul, [], acc)
+  def parse("",_,_,acc), do: acc
+
+end
+```
+
+```elixir
+example |> Day3.solve(:part1)
+```
+
+```elixir
+Input.for_day(3) |> Day3.solve(:part1)
+```
+
+```elixir
+example = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+example |> Day3.solve(:part2)
+```
+
+```elixir
+Input.for_day(3) |> Day3.solve(:part2)
+```
