@@ -282,3 +282,109 @@ Input.for_day(3) |> Day3.solve(:part2)
 * Very nice solution using nimble parse. [link](https://elixirforum.com/t/advent-of-code-2024-day-3/67837/22)
 
 * Elegant regex based using `Regex.scan` [link](https://elixirforum.com/t/advent-of-code-2024-day-3/67837/49)
+
+## Day 4
+
+```elixir
+example = """
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+"""
+```
+
+```elixir
+defmodule Day4 do
+  def solve(input, :part1) do
+    grid = input |> parse()
+
+    list = for {{x,y},a} <- grid, a == "X", direction <- 0..7 do
+      is?(grid,{x,y},direction,"XMAS")
+    end
+
+    list 
+    |> Enum.count(fn x -> x == true end)
+    
+  end
+
+  def solve(input, :part2) do
+    grid = input |> parse()
+
+    list = for {pos,a} <- grid, a == "A" do
+      (is?(grid,next(7,pos),3,"MAS") || is?(grid,next(3,pos),7,"MAS")) &&
+      (is?(grid,next(1,pos),5,"MAS") || is?(grid,next(5,pos),1,"MAS"))
+    end
+
+    list 
+    |> Enum.count(fn x -> x == true end)
+  end
+
+  def is?(grid,start,direction,search) do
+      iter(grid,start,direction)
+      |> Enum.take(String.length(search))
+      |> Enum.join()
+      |> then(fn word -> word == search end)
+  end
+
+  def iter(grid,startpos,direction) do
+    Stream.resource(
+      fn -> startpos end,
+      fn pos -> case Map.get(grid,pos) do
+          nil -> {:halt,pos}
+          val -> {[val],next(direction,pos)}
+        end
+      end,
+      fn _ -> nil end
+    )
+  end
+
+  defp next(direction,{x,y}=_position) do
+    # 0 is north, 1 is northeast, etc.
+    case direction do
+      0 -> {x,y-1}
+      1 -> {x+1,y-1}
+      2 -> {x+1,y}
+      3 -> {x+1,y+1}
+      4 -> {x,y+1}
+      5 -> {x-1,y+1}
+      6 -> {x-1,y}
+      7 -> {x-1,y-1}
+    end
+  end
+
+
+  
+  def parse(binary), do: parse(binary,{0,0},[])
+  def parse(binary,position,acc)
+  def parse(<<>>,_pos,acc), do: Enum.into(acc,%{})
+  def parse("\n" <> rest,{_x,y},acc), do: parse(rest,{0,y+1},acc)
+  def parse(<<a,rest::binary>>,{x,y},acc) when a in ~c(XMAS) do
+    parse(rest,{x+1,y},[{{x,y},<<a>>} | acc])
+  end
+  def parse(<<_a,rest::binary>>,{x,y},acc), do: parse(rest,{x+1,y},acc)
+
+end
+```
+
+```elixir
+example |> Day4.solve(:part1)
+```
+
+```elixir
+Input.for_day(4) |> Day4.solve(:part1)
+```
+
+```elixir
+example |> Day4.solve(:part2)
+```
+
+```elixir
+Input.for_day(4) |> Day4.solve(:part2)
+```
