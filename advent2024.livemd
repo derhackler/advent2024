@@ -389,6 +389,25 @@ example |> Day4.solve(:part2)
 Input.for_day(4) |> Day4.solve(:part2)
 ```
 
+#### Learnings from others
+
+* cool idea to indicate the directions: `↑↗→↘` [link](https://elixirforum.com/t/advent-of-code-2024-day-4/67869/9)
+* use of the `:array.get` module
+* matrix rotation [link](https://elixirforum.com/t/advent-of-code-2024-day-4/67869/19)
+* nice way on how to build the grid [link](https://elixirforum.com/t/advent-of-code-2024-day-4/67869/4):
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+charlists = puzzle_input |> String.split() |> Enum.map(&String.to_charlist/1)
+
+grid =
+  for {row, i} <- Enum.with_index(charlists),
+      {char, j} <- Enum.with_index(row),
+      into: %{},
+      do: {{i, j}, char}
+```
+
 ## Day 5
 
 ```elixir
