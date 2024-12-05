@@ -540,3 +540,7 @@ example |> Day5.solve(:part2)
 ```elixir
 Input.for_day(5) |> Day5.solve(:part2)
 ```
+
+#### Learning from others
+
+* using `libgraph` [link](https://github.com/Aetherus/advent-of-code/blob/60b58f9a2660e8233b8fa3a997adc81517d758f6/2024/day-05.livemd)
