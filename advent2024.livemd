@@ -388,3 +388,136 @@ example |> Day4.solve(:part2)
 ```elixir
 Input.for_day(4) |> Day4.solve(:part2)
 ```
+
+## Day 5
+
+```elixir
+example = """
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+"""
+```
+
+```elixir
+defmodule Day5 do
+  def solve(input,:part1) do
+    {rules,updates} = parse(input)
+
+    updates
+    |> Enum.filter(&valid?(&1,rules))
+    |> Enum.map(&mid/1)
+    |> Enum.sum()
+  end
+
+  def solve(input,:part2) do
+    {rules,updates} = parse(input)
+
+    updates
+    |> Enum.reject(&valid?(&1,rules))
+    |> Enum.map(&sort(&1,rules))
+    |> Enum.map(&mid/1)
+    |> Enum.sum()
+  end
+
+  def sort(update, rules) do
+    Enum.sort(update, fn p1,p2 -> 
+        case Map.get(rules,{p1,p2}) do
+          nil -> true
+          :gt -> true
+          :lt -> false
+        end 
+      end)
+  end
+
+  def valid?(update, rules) do
+    allpairs(update)
+    |> Enum.all?(fn pair ->
+        case Map.get(rules,pair) do
+          nil -> true
+          :gt -> true
+          :lt -> false
+        end
+      end)
+  end
+
+  def allpairs(list) do
+    list
+    |> Enum.reduce({[],list}, fn 
+      x, {result, [_|rest] } -> {[allpairs(x,rest) | result], rest}
+    end)
+    |> then(fn {result,_} -> result end)
+    |> List.flatten()
+  end
+  def allpairs(elem,list) do
+    list
+    |> Enum.map(fn x -> {elem,x} end)
+  end
+
+  defp mid(list) do
+    Enum.at(list, div(Enum.count(list) - 1, 2) )
+  end
+
+  def parse(input) do
+    [rules,updates] = String.split(input,"\n\n",parts: 2,trim: true)
+    {rules |> parse(:rules), updates |> parse(:updates)}
+  end
+  def parse(input,:rules) do
+    input
+    |> String.split(["\n","|"], trim: true)
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.chunk_every(2)
+    |> Enum.flat_map(fn [p1,p2] -> 
+        [{ {p1,p2}, :gt }, { {p2,p1}, :lt }]
+      end)
+    |> Enum.into(%{})
+  end
+  def parse(input,:updates) do
+    input
+    |> String.split("\n",trim: true)
+    |> Enum.map(&String.split(&1,","))
+    |> Enum.map(fn x -> Enum.map(x,&String.to_integer/1) end)
+  end
+end
+```
+
+```elixir
+example |> Day5.solve(:part1)
+```
+
+```elixir
+Input.for_day(5) |> Day5.solve(:part1)
+```
+
+```elixir
+example |> Day5.solve(:part2)
+```
+
+```elixir
+Input.for_day(5) |> Day5.solve(:part2)
+```
