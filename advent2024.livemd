@@ -201,6 +201,8 @@ Input.for_day(2) |> Day2.solve(:part2)
 * There exists a `List.delete_at` function...
 * It's possible to pipe into a `case` statement. [link](https://elixirforum.com/t/advent-of-code-2024-day-2/67804/5)
 
+<!-- livebook:{"branch_parent_index":1} -->
+
 ## Day 3
 
 ```elixir
@@ -282,6 +284,8 @@ Input.for_day(3) |> Day3.solve(:part2)
 * Very nice solution using nimble parse. [link](https://elixirforum.com/t/advent-of-code-2024-day-3/67837/22)
 
 * Elegant regex based using `Regex.scan` [link](https://elixirforum.com/t/advent-of-code-2024-day-3/67837/49)
+
+<!-- livebook:{"branch_parent_index":1} -->
 
 ## Day 4
 
@@ -407,6 +411,8 @@ grid =
       into: %{},
       do: {{i, j}, char}
 ```
+
+<!-- livebook:{"branch_parent_index":1} -->
 
 ## Day 5
 
@@ -544,3 +550,5 @@ Input.for_day(5) |> Day5.solve(:part2)
 #### Learning from others
 
 * using `libgraph` [link](https://github.com/Aetherus/advent-of-code/blob/60b58f9a2660e8233b8fa3a997adc81517d758f6/2024/day-05.livemd)
+
+<!-- livebook:{"branch_parent_index":1} -->
