@@ -552,3 +552,157 @@ Input.for_day(5) |> Day5.solve(:part2)
 * using `libgraph` [link](https://github.com/Aetherus/advent-of-code/blob/60b58f9a2660e8233b8fa3a997adc81517d758f6/2024/day-05.livemd)
 
 <!-- livebook:{"branch_parent_index":1} -->
+
+## Day 6
+
+```elixir
+example = """
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+"""
+```
+
+```elixir
+defmodule Day6 do
+  def solve(input,:part1) do
+    obstacles = parse(input,{0,0},%{})
+      |> obstacles_with_directions()
+
+    move(Map.get(obstacles,:guard),:north,obstacles,[])
+    |> Stream.flat_map(fn {_dir,from,to} -> cells(from,to) end)
+    |> Enum.uniq()
+    |> Enum.count()
+  end
+
+  def solve(input,:part2) do
+    obstacles = parse(input,{0,0},%{})
+    obswithdir = obstacles |> obstacles_with_directions()
+
+    potentials = move(Map.get(obswithdir,:guard),:north,obswithdir,[])
+      |> Stream.flat_map(fn {_dir,from,to} -> cells(from,to) end)
+      |> Enum.uniq()
+
+    loops = for newobs <- potentials do
+      obswithdir = obstacles |> add_obstacle(newobs) |> obstacles_with_directions()
+      case move(Map.get(obswithdir,:guard),:north,obswithdir,[]) do
+        :looping -> 1
+        _ -> 0
+      end
+    end
+
+    loops |> Enum.sum()
+  end
+
+  def add_obstacle(obstacles,{x,y}) do
+    obstacles
+      |> Map.update({:row,y}, [x], fn cur -> [x|cur] end)
+      |> Map.update({:col,x}, [y], fn cur -> [y|cur] end)
+  end
+
+  def move(pos,dir,obstacles,visited) do
+    case before_next_obstacle(pos,dir,obstacles) do
+      {:edge,edge} -> [{dir,pos,edge}|visited]
+      {:obstacle,nextpos} ->
+        cond do
+          {dir,pos,nextpos} in visited -> :looping
+          :else -> move(nextpos,turn_right(dir),obstacles,[{dir,pos,nextpos}|visited])
+        end
+    end
+  end
+
+  def cells({xfrom,yfrom},{xto,yto}) do
+    xstep = if xfrom < xto, do: 1, else: -1
+    ystep = if yfrom < yto, do: 1, else: -1
+
+    for x <- Range.new(xfrom,xto,xstep), y <- Range.new(yfrom,yto,ystep) do
+      {x,y}
+    end
+  end
+
+  def turn_right(dir) do
+    case dir do
+      :north -> :east
+      :east -> :south
+      :south -> :west
+      :west -> :north
+    end
+  end
+
+  def before_next_obstacle({x,y},direction,obstacles) do
+    pos = case direction do
+      :north -> Map.get(obstacles,{:col,x,:north},[]) |> Enum.find(fn o -> o < y end)
+      :south -> Map.get(obstacles,{:col,x,:south},[]) |> Enum.find(fn o -> o > y end)
+      :east -> Map.get(obstacles,{:row,y,:east},[]) |> Enum.find(fn o -> o > x end)
+      :west -> Map.get(obstacles,{:row,y,:west},[]) |> Enum.find(fn o -> o < x end)
+    end
+
+    case {pos,direction} do
+      {nil,dir} when dir in [:south] -> {:edge, {x,Map.get(obstacles,:rows)-1}}
+      {nil,dir} when dir in [:north] -> {:edge, {x,0}}
+      {nil,dir} when dir in [:west] -> {:edge, {0,y}}
+      {nil,dir} when dir in [:east] -> {:edge, {Map.get(obstacles,:cols)-1,y}}
+      {pos,dir} when dir in [:north] -> {:obstacle,{x,pos+1}}
+      {pos,dir} when dir in [:south] -> {:obstacle,{x,pos-1}}
+      {pos,dir} when dir in [:east] -> {:obstacle,{pos-1,y}}
+      {pos,dir} when dir in [:west] -> {:obstacle,{pos+1,y}}
+    end
+  end
+
+  def obstacles_with_directions(obs) do
+    obs |> Enum.flat_map(fn
+        {{:row,n},val} -> [
+            {{:row,n,:east},Enum.sort(val,:asc)},
+            {{:row,n,:west},Enum.sort(val,:desc)}
+        ]
+
+        {{:col,n},val} -> [
+            {{:col,n,:north},Enum.sort(val,:desc)},
+            {{:col,n,:south},Enum.sort(val,:asc)}
+          ]
+        other -> [other]
+      end)
+    |> Enum.into(%{})
+  end
+
+  def parse(<<>>,{_x,y},acc) do
+    acc |> Map.put(:rows,y)
+  end
+  def parse("\n" <> rest,{x,y},acc), do: parse(rest, {0,y+1}, acc |> Map.put(:cols,x))
+  def parse("." <> rest,{x,y},acc), do: parse(rest,{x+1,y},acc)
+  def parse("#" <> rest,{x,y},acc) do
+    acc = acc
+      |> Map.update({:row,y}, [x], fn cur -> [x|cur] end)
+      |> Map.update({:col,x}, [y], fn cur -> [y|cur] end)
+
+    parse(rest,{x+1,y},acc)
+  end
+  def parse("^" <> rest,{x,y},acc) do
+    acc = Map.put(acc,:guard,{x,y})
+    parse(rest,{x+1,y},acc)
+  end
+end
+```
+
+```elixir
+example |> Day6.solve(:part1)
+```
+
+```elixir
+Input.for_day(6) |> Day6.solve(:part1)
+```
+
+```elixir
+example |> Day6.solve(:part2)
+```
+
+```elixir
+Input.for_day(6) |> Day6.solve(:part2)
+```
