@@ -800,3 +800,174 @@ Input.for_day(7) |> Day7.solve(:part2)
 ```elixir
 105517128211543
 ```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Day 8
+
+```elixir
+example = """
+............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............
+"""
+```
+
+```elixir
+defmodule Day8 do
+  def solve(input,:part1) do
+    {antennas,dims} = input |> parse({0,0},{%{},0})
+
+    antennas
+      |> Enum.flat_map(fn {_freq,antennas} -> 
+          for a <- antennas, b <- antennas, a != b do
+            antinodes(a,b)
+          end
+        end)
+      |> List.flatten()
+      |> Enum.sort()
+      |> Enum.reject(&out_of_bounds?(&1,dims))
+      |> Enum.dedup()
+      |> length()
+  end
+
+  def solve(input,:part2) do
+    {antennas,dims} = input |> parse({0,0},{%{},0})
+
+    antinodes = antennas
+      |> Enum.flat_map(fn {_freq,antennas} -> 
+          for a <- antennas, b <- antennas, a != b do
+            antinodes(:ray,a,b,[],dims)
+          end
+        end)
+      |> List.flatten()
+      |> Enum.sort()
+      |> Enum.reject(&out_of_bounds?(&1,dims))
+      |> Enum.dedup()
+
+    (antinodes ++ antenna_positions(antennas))
+    |> Enum.sort()
+    |> Enum.dedup()
+    |> Enum.count()
+  end
+
+  def out_of_bounds?({x,y},{maxx,maxy}) do
+    cond do
+      x < 0 || x >= maxx -> true
+      y < 0 || y >= maxy -> true
+      :else -> false      
+    end
+  end
+
+  def antenna_positions(antennas) do
+    Enum.flat_map(antennas, fn {_freq,pos} -> pos end)
+  end
+
+  @doc """
+  calculates the antinodes
+  
+  ## Tests
+    iex> Day8.antinodes(:ray,{5,5},{7,5},[],{13,6})
+    [{-1,5},{1,5},{3,5}]
+
+    iex> Day8.antinodes(:ray,{7,5},{5,5},[],{13,6})
+    [{13,5},{11,5},{9,5}]
+  """
+  def antinodes(_,{ax,ay},{bx,by},acc,{cols,rows}) when ax < 0 or bx < 0, do: acc
+  def antinodes(_,{ax,ay},{bx,by},acc,{cols,rows}) when ay < 0 or by < 0, do: acc
+  def antinodes(_,{ax,ay},{bx,by},acc,{cols,rows}) when ax >= cols or bx >= cols, do: acc
+  def antinodes(_,{ax,ay},{bx,by},acc,{cols,rows}) when ay >= rows or by >= rows, do: acc
+    
+  def antinodes(:ray,a,b,acc,dim) do
+    [left] = antinodes(a,b)
+    antinodes(:ray,left,a,[left|acc],dim)
+  end
+  
+  @doc """
+  Creates the antinodes
+
+  ## Tests
+    iex> Day8.antinodes({1,1},{0,0})
+    [{2,2}]
+
+    iex> Day8.antinodes({1,1},{2,0})
+    [{0,2}]
+
+    iex> Day8.antinodes({1,1},{2,2})
+    [{0,0}]
+
+    iex> Day8.antinodes({1,1},{0,2})
+    [{2,0}]
+
+    iex> Day8.antinodes({0,1},{0,4})
+    [{0,-2}]
+
+    iex> Day8.antinodes({0,0},{2,2})
+    [{-2,-2}]
+
+    iex> Day8.antinodes({2,2},{0,0})
+    [{4,4}]
+  """
+
+  def antinodes({ax,ay},{bx,by}) do
+    dx = ax-bx
+    dy = ay-by
+    [{ax+dx,ay+dy}]
+  end
+  
+  def antinodes({ax,ay},{bx,by}) when ax==100 do
+    dx = abs(ax-bx)
+    dy = abs(ay-by)
+
+    cond do
+      ax >= bx && ay >= by -> [{bx-dx,by-dy},{ax+dx,ay+dy}]
+      ax <= bx && ay >= by -> [{ax-dx,ay+dy},{bx+dx,by-dy}]
+      ax <= bx && ay <= by -> [{ax-dx,ay-dy},{bx+dx,by+dy}]
+      ax >= bx && ay <= by -> [{bx-dx,by+dy},{ax+dx,ay-dy}]
+    end 
+  end
+
+  def print() do
+    
+  end
+
+
+  def parse(<<>>,{_x,y},{antennas,cols}) do
+    {antennas, {cols,y}}
+  end 
+  def parse("\n" <> rest,{x,y},{antennas,_cols}) do
+    parse(rest, {0,y+1}, {antennas,x})
+  end
+  def parse("." <> rest,{x,y},acc), do: parse(rest,{x+1,y},acc)
+  def parse(<<a,rest::binary>>,{x,y},{antennas,cols}) do
+    antennas = antennas
+      |> Map.update(a, [{x,y}], fn cur -> [{x,y}|cur] end)
+    parse(rest,{x+1,y},{antennas,cols})
+  end
+end
+```
+
+```elixir
+example |> Day8.solve(:part1)
+```
+
+```elixir
+Input.for_day(8) |> Day8.solve(:part1)
+```
+
+```elixir
+example |> Day8.solve(:part2)
+```
+
+```elixir
+Input.for_day(8) |> Day8.solve(:part2)
+```
