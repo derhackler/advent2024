@@ -1124,3 +1124,113 @@ example |> Day9.solve(:part2)
 ```elixir
 Input.for_day(9) |> Day9.solve(:part2)
 ```
+
+## Day 10
+
+```elixir
+example = """
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+"""
+```
+
+```elixir
+defmodule Day10 do
+  def solve(input,:part1) do
+    {grid,_dims} = parse(input)
+
+    Range.new(8,0,-1)
+    |> Enum.reduce(grid, fn ha,acc ->
+        acc
+        |> Enum.filter(fn {{_x,_y,h},_v} -> h == ha end)
+        |> Enum.map(fn {k,_v} -> {k,reachable(k,acc)} end)
+        |> Enum.into(%{})
+        |> then(&Map.merge(acc,&1))
+      end)
+    |> Enum.map(fn
+        {{_x,_y,0},v} -> length(v)
+        _ -> 0
+      end)
+    |> Enum.sum()
+
+  end
+
+  def solve(input,:part2) do
+    {grid,_dims} = parse(input)
+
+    Range.new(8,0,-1)
+    |> Enum.reduce(grid, fn ha,acc ->
+        acc
+        |> Enum.filter(fn {{_x,_y,h},_v} -> h == ha end)
+        |> Enum.map(fn {k,_v} -> {k,sum_higher(k,acc)} end)
+        |> Enum.into(%{})
+        |> then(&Map.merge(acc,&1))
+      end)
+    |> Enum.map(fn
+        {{_x,_y,0},v} -> v
+        _ -> 0
+      end)
+    |> Enum.sum()
+  end
+
+  def reachable({x,y,h},grid) do
+    [{0,-1},{1,0},{0,1},{-1,0}]
+    |> Enum.reduce([],fn {tx,ty},acc ->
+        [Map.get(grid,{x+tx,y+ty,h+1},[]) | acc]
+      end)
+    |> List.flatten()
+    |> Enum.uniq_by(&Function.identity/1)
+  end
+
+
+  def sum_higher({x,y,h},grid) do
+    [{0,-1},{1,0},{0,1},{-1,0}]
+    |> Enum.reduce(0,fn {tx,ty},acc ->
+        case Map.get(grid,{x+tx,y+ty,h+1},0) do
+          [_] -> acc + 1 # the neighbor is a peak (see parsing)
+          num -> acc + num
+        end
+      end)
+  end
+
+  def parse(input), do: parse(input,{0,0},{%{},0})
+  def parse(<<>>,{_x,y},{acc,cols}) do
+    {acc, {cols,y}}
+  end
+  def parse("\n" <> rest,{x,y},{acc,_cols}) do
+    parse(rest, {0,y+1}, {acc,x})
+  end
+  def parse("." <> rest,{x,y},acc), do: parse(rest,{x+1,y},acc)
+  def parse(<<?9,rest::binary>>,{x,y},{acc,cols}) do
+    acc = acc |> Map.put({x,y,9},[{x,y}])
+    parse(rest,{x+1,y},{acc,cols})
+  end
+  def parse(<<a,rest::binary>>,{x,y},{acc,cols}) do
+    acc = acc |> Map.put({x,y,a - 48},[])
+    parse(rest,{x+1,y},{acc,cols})
+  end
+
+end
+```
+
+```elixir
+example |> Day10.solve(:part1)
+```
+
+```elixir
+Input.for_day(10) |> Day10.solve(:part1)
+```
+
+```elixir
+example |> Day10.solve(:part2)
+```
+
+```elixir
+Input.for_day(10) |> Day10.solve(:part2)
+```
