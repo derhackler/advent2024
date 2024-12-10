@@ -971,3 +971,156 @@ example |> Day8.solve(:part2)
 ```elixir
 Input.for_day(8) |> Day8.solve(:part2)
 ```
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Day 9
+
+```elixir
+example = "2333133121414131402"
+```
+
+```elixir
+defmodule Day9 do
+  def solve(input, :part1) do
+    disk = parse(input)
+
+    disk2 = Enum.reverse(disk) |> Enum.filter(fn
+      {:file,_,_} -> true
+      {:space,_} -> false
+    end)
+
+    fill(disk,disk2,[],-1)
+    |> Enum.filter(fn
+      {:file,_,0} -> false
+      _ -> true
+    end)
+    |> Enum.reverse()
+    |> checksum()
+  end
+
+  def solve(input, :part2) do
+    input
+      |> parse()
+      |> place()
+      |> checksum()
+  end
+
+  # no files to position anymore
+  def fill(_,[],acc,_max), do: acc
+
+  # tail bites head
+  def fill([{:file,idx,_}|_]=disk, [{:file,idx2,_} = file2|rest2], acc, _max) when idx2 <= idx do
+    cond do
+      # skip the file and let the recursion takes care of filling the remaining
+      # this takes care of the annoying case where the file got split up
+      idx == idx2 -> fill(disk, rest2, [file2|acc], idx2)
+      idx > idx2 -> acc
+    end
+  end
+
+  # take files
+  def fill([{:file,idx,_} = file| rest] , disk2, acc, _max) do
+    fill(rest,disk2,[file|acc],idx)
+  end
+
+  # tail bites head exit condition
+  def fill( [{:space,_} | _], [{:file,idx,_} | _], acc, max) when idx <= max do
+    acc
+  end
+
+  # fill up the free space
+  def fill( [{:space,len} | rest], [{:file,idx,len2} = file2 | rest2], acc, max) do
+    case len >= len2 do
+      true -> fill( [{:space,len-len2} | rest] , rest2, [file2 | acc], max)
+      false -> fill( rest, [{:file,idx,len2-len}|rest2], [{:file,idx,len}|acc], max)
+    end
+  end
+
+  def checksum(disk) do
+    disk
+      |> Enum.reduce({0,0}, fn
+        {:file,idx,len}, {blockpos,result} ->
+          cs = Range.new(blockpos,(blockpos+len-1)) |> Enum.reduce(0,fn x, acc -> x*idx + acc end)
+          {blockpos + len, result + cs}
+
+        {:space,len}, {blockpos,result} ->
+          {blockpos + len, result}
+      end)
+  end
+
+
+  ###### Part 2 algorithm
+  def place(blocks) do
+    # reverse so that it starts from behind
+    # we shouldn't have more than a million files
+    place(Enum.reverse(blocks),[],1_000_000)
+  end
+
+  # nothing to place anymore
+  def place([],placed,_maxid), do: placed
+
+  # placing a block
+  def place([toplace|rest],placed,maxidx) do
+    #plot(([toplace|rest] |> Enum.reverse()) ++ placed)
+    case toplace do
+      {:space,_} -> place(rest,[toplace|placed],maxidx) # spaces won't move anymore
+      {:file,idx,_len} when idx >= maxidx -> place(rest,[toplace|placed],maxidx) # already moved
+      {:file,idx,_} -> place(find_position(toplace, rest |> Enum.reverse(),[]), placed, idx)
+    end
+  end
+
+  # nowhere to go. add to the end
+  def find_position(file,[],acc), do: [file|acc]
+
+  # found a nice space. add it too it
+  def find_position({:file,_,len}=file, [{:space,slen} | rest], acc) when slen >= len do
+    cond do
+      len == slen -> [{:space, len}] ++ (rest |> Enum.reverse()) ++ [file|acc]
+      len < slen -> [{:space, len}] ++ (rest |> Enum.reverse()) ++ [{:space,slen-len} | [file|acc] ]
+    end
+  end
+
+  # not at this position. move on
+  def find_position(file, [elem | rest], acc) do
+    find_position(file, rest, [elem | acc])
+  end
+
+  def plot(memory) do
+    Enum.each(memory, fn
+          {:space,0} -> nil
+            {:file,idx,len} -> Range.new(0,len-1) |> Enum.each(fn _ -> IO.write(idx) end)
+          {:space,len} -> Range.new(0,len-1) |> Enum.each(fn _ -> IO.write(".") end)
+        end)
+    IO.write("\n")
+  end
+
+
+  def parse(input) do
+    input
+    |> String.trim()
+    |> String.graphemes()
+    |> Enum.with_index(fn elem,idx ->
+      case rem(idx,2) do
+        1 -> {:space,String.to_integer(elem)}
+        0 -> {:file,div(idx,2),String.to_integer(elem)}
+      end
+    end)
+  end
+end
+```
+
+```elixir
+example |> Day9.solve(:part1)
+```
+
+```elixir
+Input.for_day(9) |> Day9.solve(:part1)
+```
+
+```elixir
+example |> Day9.solve(:part2)
+```
+
+```elixir
+Input.for_day(9) |> Day9.solve(:part2)
+```
