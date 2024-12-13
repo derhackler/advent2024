@@ -1248,3 +1248,151 @@ example |> Day10.solve(:part2)
 ```elixir
 Input.for_day(10) |> Day10.solve(:part2)
 ```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Day 12
+
+```elixir
+example = """
+OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO
+"""
+
+example = """
+AY
+YY
+"""
+
+
+
+example = """
+AYA
+YYY
+AYA
+"""
+
+example = """
+RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+"""
+
+example = """
+RRRRII..FF
+RRRRII...F
+VVRRR..FFF
+VVR...JFFF
+VVVV.JJ.FE
+VVIV..JJEE
+VVIII.JJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+"""
+
+```
+
+```elixir
+defmodule Day12 do
+  def solve(input, :part1) do
+    {grid,dims} = parse(input)
+
+    {_,grid,mrg} = grid
+      |> Map.keys()
+      |> Enum.sort()
+      |> Enum.reduce({_clusterid=1,_newgrid=grid,_merges=[]}, fn pos, {cid,grid,mrg} ->
+        {modcell, merges} = add_fences({pos,Map.get(grid,pos)}, grid, cid)
+        #dbg{pos,modcell,merges}
+        {cid+1,Map.put(grid,pos,modcell),[merges | mrg]}
+      end)
+
+    # merge clusters
+    mrg = List.flatten(mrg)
+    grid = merge_clusters(grid,mrg)
+
+    #dbg({grid,Enum.sort_by(mrg,fn {a,b} -> a end, :desc)})
+
+    # group by cluster and calculate
+    grid
+    |> Enum.group_by(fn {_pos,{kind,cid,_edg}} -> {kind,cid} end, fn {_pos,{_kind,_cid,edges}} -> length(edges) end)
+    #|> Enum.map(fn {k,v} -> {k,length(v) * Enum.sum(v)} end)
+    |> Enum.map(fn {k,v} -> length(v) * Enum.sum(v) end)
+    |> Enum.sum()
+  end
+
+  def merge_clusters(grid,merges) do
+    merges = Enum.sort_by(merges,fn {a,b} -> a end, :desc)
+      |> Enum.filter(fn {a,b} -> a != b end)
+    for {pos,{kind,cluster,edges}} <- grid, into: %{} do
+      newcluster = Enum.reduce(merges,_acc=cluster,fn 
+          {mc1, c2}, mc1 -> c2
+          _,mc1 -> mc1
+        end)
+      {pos,{kind,newcluster,edges}}
+    end
+  end
+
+  def add_fences({pos,{kind,_,_}},grid,nextcluster) do
+    # returns the updated cell and clusters that need to be merged
+    
+    {c,e,m} = for n <- neighbors(pos,grid), reduce: {nextcluster,_edges=[],_merges=[]} do
+      {cluster,edges,merges} -> 
+        #dbg({n})
+        case n do
+          {npos,nil} -> {cluster, [npos|edges], merges} # edge
+          {_npos,{^kind,nil,_}} -> {cluster, edges, merges} # same kind not in a cluster yet
+          {_npos,{^kind,cs,_}} -> # same kind in a cluster already
+            #dbg({kind,cluster,cs,nextcluster})
+            if cluster == nextcluster do
+              {cs, edges, merges}
+            else
+              {cs, edges, [desctuple(cluster,cs) | merges]}
+            end
+          {npos,{_otherkind,_,_}} -> {cluster,[npos|edges],merges} #other kind 
+        end
+    end
+
+    {{kind,c,e},m}
+  end
+
+  def desctuple(x,y) when x > y, do: {x,y}
+  def desctuple(x,y), do: {y,x}
+
+  def neighbors({x,y},grid) do
+    [{0,-1},{-1,0},{0,1},{1,0}]
+    |> Enum.map(fn {tx,ty} -> {{x+tx,y+ty},Map.get(grid,{x+tx,y+ty})} end)
+  end
+
+  def parse(input), do: parse(input,{0,0},{%{},0})
+  def parse(<<>>,{_x,y},{acc,cols}) do
+    {acc, {cols,y}}
+  end 
+  def parse("\n" <> rest,{x,y},{acc,_cols}) do
+    parse(rest, {0,y+1}, {acc,x})
+  end
+  def parse(<<a,rest::binary>>,{x,y},{acc,cols}) do
+    # a cell is {kind,the cluster id,positions of cells with a fence to}
+    acc = acc |> Map.put({x,y}, {<<a>>,nil,[]} )
+    parse(rest,{x+1,y},{acc,cols})
+  end
+end
+```
+
+```elixir
+example |> Day12.solve(:part1)
+```
+
+```elixir
+Input.for_day(12) |> Day12.solve(:part1)
+```
